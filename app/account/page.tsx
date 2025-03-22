@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getUserByEmail, updateUser } from "@/lib/storage"
+import { ProfileForm } from "@/components/auth/profile-form"
 
 export default function AccountPage() {
   const router = useRouter()
@@ -174,6 +175,20 @@ export default function AccountPage() {
 
   return (
     <div className="container px-4 py-8">
+      <div className="grid gap-8 md:grid-cols-[1fr_3fr]">
+        <div className="md:col-span-1">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight">Account</h2>
+            <p className="text-muted-foreground">
+              Manage your account settings and preferences
+            </p>
+          </div>
+        </div>
+        <div className="md:col-span-1">
+          <ProfileForm />
+        </div>
+      </div>
+
       <div className="flex flex-col gap-8 md:flex-row">
         <div className="md:w-64">
           <div className="sticky top-24 space-y-6">
@@ -425,4 +440,3 @@ export default function AccountPage() {
     </div>
   )
 }
-

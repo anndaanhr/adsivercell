@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { CartProvider } from "@/components/cart-provider"
-import { AuthProvider } from "@/components/auth-provider"
+import { EnhancedAuthProvider } from "@/components/enhanced-auth-provider"
 import { VerificationProvider } from "@/components/verification-provider"
 import { GameDataProvider } from "@/components/game-data-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -24,6 +24,8 @@ import GlobalWrapper from "./global-wrapper"
 import { SavedCartProvider } from "@/components/saved-cart-provider"
 import { ReviewProvider } from "@/components/review-provider"
 import { RecommendationsProvider } from "@/components/recommendations-provider"
+import { AISupportChat } from "@/components/ai-support-chat"
+import { FEATURES } from "@/lib/config"
 
 import "./globals.css"
 
@@ -32,7 +34,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Zafago - Digital Game Store",
   description: "Buy game keys for Steam, Epic Games, and more at the best prices",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -44,7 +46,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
+          <EnhancedAuthProvider>
             <VerificationProvider>
               <GameDataProvider>
                 <CartProvider>
@@ -275,6 +277,9 @@ export default function RootLayout({
                                 </div>
                               </div>
                             </footer>
+
+                            {/* Add AI Support Chat only if the feature is enabled */}
+                            {FEATURES.USE_AI_CUSTOMER_SUPPORT && <AISupportChat />}
                           </div>
                           <Toaster />
                           <InitData />
@@ -285,7 +290,7 @@ export default function RootLayout({
                 </CartProvider>
               </GameDataProvider>
             </VerificationProvider>
-          </AuthProvider>
+          </EnhancedAuthProvider>
         </ThemeProvider>
       </body>
     </html>
