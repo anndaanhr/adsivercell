@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Gamepad2 } from "lucide-react"
 
@@ -27,8 +27,13 @@ interface GamesPageProps {
 
 export default function GamesPage({ searchParams }: GamesPageProps) {
   const router = useRouter()
+  const [filteredGames, setFilteredGames] = useState([...games])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isInitialized, setIsInitialized] = useState(false)
+
   const isMounted = useRef(true)
-  const initialRenderRef = useRef(true)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Convert search params to the right format
   const genres = Array.isArray(searchParams.genre) ? searchParams.genre : searchParams.genre ? [searchParams.genre] : []
@@ -45,49 +50,42 @@ export default function GamesPage({ searchParams }: GamesPageProps) {
       ? [searchParams.publisher]
       : []
 
-  const [filteredGames, setFilteredGames] = useState([...games])
-  const [isLoading, setIsLoading] = useState(true)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // Clear all timeouts helper function
+  const clearAllTimeouts = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+
+    if (safetyTimeoutRef.current) {
+      clearTimeout(safetyTimeoutRef.current)
+      safetyTimeoutRef.current = null
+    }
+  }, [])
 
   // Set up mounted state and cleanup
   useEffect(() => {
     isMounted.current = true
 
+    // Set initial state
+    if (!isInitialized) {
+      setIsInitialized(true)
+      filterGames()
+    }
+
     return () => {
       isMounted.current = false
-
-      // Clear all timeouts on unmount
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
-
-      if (safetyTimeoutRef.current) {
-        clearTimeout(safetyTimeoutRef.current)
-        safetyTimeoutRef.current = null
-      }
-
-      // Ensure loading state is reset when component unmounts
-      setIsLoading(false)
+      clearAllTimeouts()
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Filter games based on search params - only run on searchParams change
-  useEffect(() => {
+  // Filter games based on search params
+  const filterGames = useCallback(() => {
     // Clear any existing timeout to prevent memory leaks
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-
-    if (safetyTimeoutRef.current) {
-      clearTimeout(safetyTimeoutRef.current)
-    }
+    clearAllTimeouts()
 
     // Set loading state immediately
-    if (isMounted.current) {
-      setIsLoading(true)
-    }
+    setIsLoading(true)
 
     // Use setTimeout to prevent blocking the UI
     timeoutRef.current = setTimeout(() => {
@@ -109,11 +107,8 @@ export default function GamesPage({ searchParams }: GamesPageProps) {
         if (genres.length > 0) {
           result = result.filter((game) =>
             genres.some(
-              (genre) => {
-                // Handle both genreIds and genres
-                const gameGenres = game.genreIds || game.genres || []
-                return gameGenres.includes(genre)
-              }
+              (genre) =>
+                (game.genreIds && game.genreIds.includes(genre)) || (game.genres && game.genres.includes(genre)),
             ),
           )
         }
@@ -121,11 +116,9 @@ export default function GamesPage({ searchParams }: GamesPageProps) {
         if (platforms.length > 0) {
           result = result.filter((game) =>
             platforms.some(
-              (platform) => {
-                // Handle both platformIds and platforms
-                const gamePlatforms = game.platformIds || game.platforms || []
-                return gamePlatforms.includes(platform)
-              }
+              (platform) =>
+                (game.platformIds && game.platformIds.includes(platform)) ||
+                (game.platforms && game.platforms.includes(platform)),
             ),
           )
         }
@@ -215,34 +208,41 @@ export default function GamesPage({ searchParams }: GamesPageProps) {
           setIsLoading(false)
         }
       }
-    }, 300) // Slightly longer timeout for better UX
+    }, 300)
 
     // Add a safety timeout to ensure loading state doesn't get stuck
     safetyTimeoutRef.current = setTimeout(() => {
       if (isMounted.current) {
         setIsLoading(false)
       }
-    }, 3000) // 3 seconds max loading time
+    }, 2000) // 2 seconds max loading time
+  }, [searchParams, genres, platforms, publishers, clearAllTimeouts])
 
-    // Cleanup function to clear timeout if component unmounts or dependencies change
+  // Run filter when search params change
+  useEffect(() => {
+    filterGames()
+
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
-
-      if (safetyTimeoutRef.current) {
-        clearTimeout(safetyTimeoutRef.current)
-        safetyTimeoutRef.current = null
-      }
+      clearAllTimeouts()
     }
-  }, [searchParams, genres, platforms, publishers])
+  }, [searchParams, filterGames, clearAllTimeouts])
 
   // Function to handle filter changes (client-side)
   const handleFilterChange = () => {
     // This is handled by the component itself through URL updates
-    // No need to do anything here as the URL updates will trigger a page refresh
   }
+
+  // Force loading state to false after a delay (safety measure)
+  useEffect(() => {
+    const forceLoadingTimeout = setTimeout(() => {
+      if (isLoading && isMounted.current) {
+        console.log("Force ending loading state after timeout")
+        setIsLoading(false)
+      }
+    }, 3000)
+
+    return () => clearTimeout(forceLoadingTimeout)
+  }, [isLoading])
 
   return (
     <div className="container px-4 py-8">
@@ -306,3 +306,4 @@ export default function GamesPage({ searchParams }: GamesPageProps) {
     </div>
   )
 }
+

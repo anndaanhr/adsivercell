@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Heart, BarChart } from "lucide-react"
@@ -24,8 +24,6 @@ interface GameCardProps {
         image?: string
         platforms: string[]
         genres: string[]
-        platformIds?: string[]
-        genreIds?: string[]
         developer: string
         publisher: string
         releaseDate: string
@@ -34,6 +32,13 @@ interface GameCardProps {
 }
 
 export function GameCard({ game }: GameCardProps) {
+  const [isClient, setIsClient] = useState(false)
+
+  // Set client-side flag after mount
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   // Calculate discounted price
   const discountedPrice = game.discount > 0 ? game.price * (1 - game.discount / 100) : game.price
 
@@ -42,47 +47,50 @@ export function GameCard({ game }: GameCardProps) {
     e.preventDefault()
     e.stopPropagation()
 
-    // Get current compared games from localStorage
-    const comparedGamesStr = localStorage.getItem("zafago_compared_games")
-    let comparedGames: string[] = []
+    if (!isClient) return
 
-    if (comparedGamesStr) {
-      try {
-        comparedGames = JSON.parse(comparedGamesStr)
-      } catch (error) {
-        console.error("Error parsing compared games:", error)
+    try {
+      // Get current compared games from localStorage
+      const comparedGamesStr = localStorage.getItem("zafago_compared_games")
+      let comparedGames: string[] = []
+
+      if (comparedGamesStr) {
+        try {
+          comparedGames = JSON.parse(comparedGamesStr)
+        } catch (error) {
+          console.error("Error parsing compared games:", error)
+        }
       }
-    }
 
-    // Check if game is already in comparison
-    if (comparedGames.includes(game.id)) {
-      // Remove from comparison
-      comparedGames = comparedGames.filter((id) => id !== game.id)
-    } else {
-      // Add to comparison (max 3)
-      if (comparedGames.length < 3) {
-        comparedGames.push(game.id)
+      // Check if game is already in comparison
+      if (comparedGames.includes(game.id)) {
+        // Remove from comparison
+        comparedGames = comparedGames.filter((id) => id !== game.id)
       } else {
-        // Remove the first game and add the new one
-        comparedGames.shift()
-        comparedGames.push(game.id)
+        // Add to comparison (max 3)
+        if (comparedGames.length < 3) {
+          comparedGames.push(game.id)
+        } else {
+          // Remove the first game and add the new one
+          comparedGames.shift()
+          comparedGames.push(game.id)
+        }
       }
-    }
 
-    // Save back to localStorage
-    localStorage.setItem("zafago_compared_games", JSON.stringify(comparedGames))
+      // Save back to localStorage
+      localStorage.setItem("zafago_compared_games", JSON.stringify(comparedGames))
 
-    // Redirect to compare page if 2 or more games are selected
-    if (comparedGames.length >= 2) {
-      window.location.href = "/compare"
+      // Redirect to compare page if 2 or more games are selected
+      if (comparedGames.length >= 2) {
+        window.location.href = "/compare"
+      }
+    } catch (error) {
+      console.error("Error updating comparison:", error)
     }
   }
 
   // Safely get platforms - support both platformIds and platforms
   const platformsToShow = game.platformIds || game.platforms || []
-
-  // Safely get genres - support both genreIds and genres
-  const genresToShow = game.genreIds || game.genres || []
 
   return (
     <div className="group relative overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md">
@@ -154,14 +162,6 @@ export function GameCard({ game }: GameCardProps) {
           ))}
         </div>
 
-        <div className="mb-2 flex flex-wrap gap-1">
-          {genresToShow.map((genre) => (
-            <Badge key={genre} variant="outline" className="text-xs">
-              {genre}
-            </Badge>
-          ))}
-        </div>
-
         <Link href={`/games/${game.id}`} className="block">
           <h3 className="mb-1 line-clamp-1 font-medium transition-colors group-hover:text-primary">{game.title}</h3>
         </Link>
@@ -178,3 +178,4 @@ export function GameCard({ game }: GameCardProps) {
     </div>
   )
 }
+

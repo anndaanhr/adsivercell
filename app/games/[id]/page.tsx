@@ -27,7 +27,7 @@ interface GamePageProps {
   }
 }
 
-export default async function GamePage({ params }: GamePageProps) {
+export default function GamePage({ params }: GamePageProps) {
   const game = games.find((g) => g.id === params.id)
 
   if (!game) {
@@ -464,3 +464,4 @@ export default async function GamePage({ params }: GamePageProps) {
     </div>
   )
 }
+

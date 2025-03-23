@@ -10,13 +10,11 @@ export const initialGames: Game[] = [
     price: 59.99,
     discount: 25,
     image: "/games/cyberpunk.jpg",
-    genreIds: ["RPG", "Action", "Open World"],
-    platformIds: ["Steam", "Epic"],
+    genres: ["RPG", "Action", "Open World"],
+    platforms: ["Steam", "Epic"],
     developer: "CD Projekt Red",
     publisher: "CD Projekt",
     releaseDate: "2020-12-10",
-    rating: 4.2,
-    tags: ["Cyberpunk", "RPG", "Open World", "Futuristic"]
   },
   {
     id: "2",
@@ -25,13 +23,11 @@ export const initialGames: Game[] = [
     price: 59.99,
     discount: 0,
     image: "/games/elden-ring.jpg",
-    genreIds: ["RPG", "Action", "Open World"],
-    platformIds: ["Steam"],
+    genres: ["RPG", "Action", "Open World"],
+    platforms: ["Steam"],
     developer: "FromSoftware",
     publisher: "Bandai Namco",
     releaseDate: "2022-02-25",
-    rating: 4.8,
-    tags: ["Fantasy", "Souls-like", "Open World"]
   },
   {
     id: "3",
@@ -41,13 +37,11 @@ export const initialGames: Game[] = [
     price: 49.99,
     discount: 15,
     image: "/games/god-of-war.jpg",
-    genreIds: ["Action", "Adventure"],
-    platformIds: ["Steam", "Epic"],
+    genres: ["Action", "Adventure"],
+    platforms: ["Steam", "Epic"],
     developer: "Santa Monica Studio",
     publisher: "Sony Interactive Entertainment",
     releaseDate: "2022-01-14",
-    rating: 4.5,
-    tags: ["Action", "Adventure"]
   },
   {
     id: "4",
@@ -56,13 +50,11 @@ export const initialGames: Game[] = [
     price: 59.99,
     discount: 33,
     image: "/games/rdr2.jpg",
-    genreIds: ["Action", "Adventure", "Open World"],
-    platformIds: ["Steam", "Epic"],
+    genres: ["Action", "Adventure", "Open World"],
+    platforms: ["Steam", "Epic"],
     developer: "Rockstar Games",
     publisher: "Rockstar Games",
     releaseDate: "2019-12-05",
-    rating: 4.7,
-    tags: ["Western", "Open World"]
   },
   {
     id: "5",
@@ -72,13 +64,11 @@ export const initialGames: Game[] = [
     price: 39.99,
     discount: 70,
     image: "/games/witcher3.jpg",
-    genreIds: ["RPG", "Open World", "Fantasy"],
-    platformIds: ["Steam", "Epic", "GOG"],
+    genres: ["RPG", "Open World", "Fantasy"],
+    platforms: ["Steam", "Epic", "GOG"],
     developer: "CD Projekt Red",
     publisher: "CD Projekt",
     releaseDate: "2015-05-19",
-    rating: 4.9,
-    tags: ["Fantasy", "RPG"]
   },
   {
     id: "6",
@@ -87,13 +77,11 @@ export const initialGames: Game[] = [
     price: 49.99,
     discount: 50,
     image: "/games/horizon.jpg",
-    genreIds: ["Action", "RPG", "Open World"],
-    platformIds: ["Steam", "Epic"],
+    genres: ["Action", "RPG", "Open World"],
+    platforms: ["Steam", "Epic"],
     developer: "Guerrilla Games",
     publisher: "Sony Interactive Entertainment",
     releaseDate: "2020-08-07",
-    rating: 4.6,
-    tags: ["Action", "Open World"]
   },
   {
     id: "7",
@@ -103,13 +91,11 @@ export const initialGames: Game[] = [
     price: 24.99,
     discount: 20,
     image: "/games/hades.jpg",
-    genreIds: ["Action", "Roguelike", "Indie"],
-    platformIds: ["Steam", "Epic"],
+    genres: ["Action", "Roguelike", "Indie"],
+    platforms: ["Steam", "Epic"],
     developer: "Supergiant Games",
     publisher: "Supergiant Games",
     releaseDate: "2020-09-17",
-    rating: 4.8,
-    tags: ["Indie", "Roguelike"]
   },
   {
     id: "8",
@@ -119,13 +105,11 @@ export const initialGames: Game[] = [
     price: 14.99,
     discount: 0,
     image: "/games/stardew-valley.jpg",
-    genreIds: ["Simulation", "RPG", "Indie"],
-    platformIds: ["Steam", "GOG"],
+    genres: ["Simulation", "RPG", "Indie"],
+    platforms: ["Steam", "GOG"],
     developer: "ConcernedApe",
     publisher: "ConcernedApe",
     releaseDate: "2016-02-26",
-    rating: 4.7,
-    tags: ["Indie", "Simulation"]
   },
   {
     id: "9",
@@ -135,13 +119,11 @@ export const initialGames: Game[] = [
     price: 59.99,
     discount: 60,
     image: "/games/ac-valhalla.jpg",
-    genreIds: ["Action", "RPG", "Open World"],
-    platformIds: ["Epic"],
+    genres: ["Action", "RPG", "Open World"],
+    platforms: ["Epic"],
     developer: "Ubisoft Montreal",
     publisher: "Ubisoft",
     releaseDate: "2020-11-10",
-    rating: 4.3,
-    tags: ["Action", "Open World"]
   },
   {
     id: "10",
@@ -151,13 +133,11 @@ export const initialGames: Game[] = [
     price: 59.99,
     discount: 50,
     image: "/games/far-cry-6.jpg",
-    genreIds: ["Action", "FPS", "Open World"],
-    platformIds: ["Epic"],
+    genres: ["Action", "FPS", "Open World"],
+    platforms: ["Epic"],
     developer: "Ubisoft Toronto",
     publisher: "Ubisoft",
     releaseDate: "2021-10-07",
-    rating: 4.0,
-    tags: ["Action", "Open World"]
   },
   {
     id: "11",
@@ -167,13 +147,11 @@ export const initialGames: Game[] = [
     price: 59.99,
     discount: 0,
     image: "/games/last-of-us.jpg",
-    genreIds: ["Action", "Adventure", "Survival"],
-    platformIds: ["Steam"],
+    genres: ["Action", "Adventure", "Survival"],
+    platforms: ["Steam"],
     developer: "Naughty Dog",
     publisher: "Sony Interactive Entertainment",
     releaseDate: "2022-09-02",
-    rating: 4.9,
-    tags: ["Action", "Survival"]
   },
   {
     id: "12",
@@ -183,13 +161,11 @@ export const initialGames: Game[] = [
     price: 59.99,
     discount: 20,
     image: "/games/hogwarts-legacy.jpg",
-    genreIds: ["RPG", "Open World", "Fantasy"],
-    platformIds: ["Steam", "Epic"],
+    genres: ["RPG", "Open World", "Fantasy"],
+    platforms: ["Steam", "Epic"],
     developer: "Avalanche Software",
     publisher: "Warner Bros. Games",
     releaseDate: "2023-02-10",
-    rating: 4.5,
-    tags: ["Fantasy", "Open World"]
   },
 ]
 
@@ -296,12 +272,12 @@ export const initialReviews: Review[] = [
 
 // Helper functions to get unique values
 export function getUniqueGenres(): string[] {
-  const allGenres = initialGames.flatMap((game) => game.genreIds)
+  const allGenres = initialGames.flatMap((game) => game.genres)
   return [...new Set(allGenres)]
 }
 
 export function getUniquePlatforms(): string[] {
-  const allPlatforms = initialGames.flatMap((game) => game.platformIds)
+  const allPlatforms = initialGames.flatMap((game) => game.platforms)
   return [...new Set(allPlatforms)]
 }
 
@@ -314,3 +290,4 @@ export function getUniqueDevelopers(): string[] {
   const allDevelopers = initialGames.map((game) => game.developer)
   return [...new Set(allDevelopers)]
 }
+

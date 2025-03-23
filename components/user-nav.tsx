@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { CircleUser, LogOut, Settings, ShoppingBag, Heart, Bell, KeyRound } from "lucide-react"
+import { User, LogIn, LogOut, ShoppingCart, Heart, Settings, Mail, Shield } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,117 +13,127 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from "@/components/auth-provider"
+import { useVerification } from "@/components/verification-provider"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 
 export function UserNav() {
-  const { user, isLoading, signOut } = useAuth()
+  const { user, logout } = useAuth()
+  const { isVerified, sendVerificationEmail } = useVerification()
   const { toast } = useToast()
-  const router = useRouter()
 
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-      toast({
-        title: "Signed out",
-        description: "You've been successfully signed out.",
-      })
-    } catch (error) {
-      console.error("Error signing out:", error)
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive",
-      })
-    }
+  const handleLogout = () => {
+    logout()
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    })
   }
 
-  if (isLoading) {
-    return (
-      <Button variant="ghost" size="icon">
-        <span className="h-7 w-7 rounded-full bg-muted/50 animate-pulse"></span>
-      </Button>
-    )
+  const handleVerifyEmail = () => {
+    sendVerificationEmail()
+    toast({
+      title: "Verification Email Sent",
+      description: "Please check your inbox and click the verification link",
+    })
   }
-
-  if (!user) {
-    return (
-      <Button variant="outline" size="sm" asChild>
-        <Link href="/auth/login">Sign In</Link>
-      </Button>
-    )
-  }
-
-  const userDisplayName = user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-  const userInitial = userDisplayName.charAt(0).toUpperCase()
-  const userAvatarUrl = user.user_metadata?.avatar_url
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" size="icon" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            {userAvatarUrl ? (
-              <AvatarImage src={userAvatarUrl} alt={userDisplayName} />
-            ) : null}
-            <AvatarFallback>{userInitial}</AvatarFallback>
+            <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
+            <AvatarFallback>{user ? user.name.charAt(0) : "G"}</AvatarFallback>
           </Avatar>
+          {user && !isVerified && (
+            <span className="absolute -right-1 -top-1 flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-500"></span>
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{userDisplayName}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/account">
-              <CircleUser className="mr-2 h-4 w-4" />
-              <span>Account</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/account/orders">
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              <span>Orders</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/account/wishlist">
-              <Heart className="mr-2 h-4 w-4" />
-              <span>Wishlist</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/account/notifications">
-              <Bell className="mr-2 h-4 w-4" />
-              <span>Notifications</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/account/keys">
-              <KeyRound className="mr-2 h-4 w-4" />
-              <span>Digital Keys</span>
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/account/settings">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Sign out</span>
-        </DropdownMenuItem>
+        {user ? (
+          <>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user.name}</p>
+                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                {!isVerified && <Badge className="mt-1 w-fit bg-amber-500 hover:bg-amber-600">Unverified</Badge>}
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {!isVerified && (
+              <>
+                <DropdownMenuItem onClick={handleVerifyEmail}>
+                  <Mail className="mr-2 h-4 w-4 text-amber-500" />
+                  <span>Verify Email</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link href="/account">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Account</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/account/orders">
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  <span>Orders</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/account/wishlist">
+                  <Heart className="mr-2 h-4 w-4" />
+                  <span>Wishlist</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/account/security">
+                  <Shield className="mr-2 h-4 w-4" />
+                  <span>Security</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/account/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <>
+            <DropdownMenuLabel>Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/auth/login">
+                <LogIn className="mr-2 h-4 w-4" />
+                <span>Log in</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/auth/register">
+                <User className="mr-2 h-4 w-4" />
+                <span>Sign up</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
+

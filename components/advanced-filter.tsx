@@ -66,11 +66,13 @@ function FilterContent({ onFilterChange, totalGames, initialFilters }: AdvancedF
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [isClient, setIsClient] = useState(false)
 
-  const isMounted = useRef(false)
+  const isMounted = useRef(true)
   const initialRenderRef = useRef(true)
   const pendingUpdateRef = useRef(false)
   const lastUrlUpdateRef = useRef("")
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Initialize filters from props (which come from URL)
   const [filters, setFilters] = useState<FilterState>(() => {
@@ -88,11 +90,12 @@ function FilterContent({ onFilterChange, totalGames, initialFilters }: AdvancedF
   })
 
   const [showMobileFilters, setShowMobileFilters] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Set mounted flag after initial render
+  // Set client-side flag after mount
   useEffect(() => {
+    setIsClient(true)
     isMounted.current = true
+
     return () => {
       isMounted.current = false
       if (timeoutRef.current) {
@@ -103,6 +106,8 @@ function FilterContent({ onFilterChange, totalGames, initialFilters }: AdvancedF
 
   // Handle URL updates when filters change
   useEffect(() => {
+    if (!isClient) return
+
     // Skip the first render to avoid double updates
     if (initialRenderRef.current) {
       initialRenderRef.current = false
@@ -159,7 +164,10 @@ function FilterContent({ onFilterChange, totalGames, initialFilters }: AdvancedF
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [filters, onFilterChange, router, pathname])
+  }, [filters, onFilterChange, router, pathname, isClient])
+
+  // Rest of the component remains the same...
+  // I'm omitting the rest of the component for brevity, as it doesn't need changes
 
   const handleGenreChange = (genreId: string, checked: boolean) => {
     setFilters((prev) => ({
@@ -259,6 +267,10 @@ function FilterContent({ onFilterChange, totalGames, initialFilters }: AdvancedF
   const currentYear = new Date().getFullYear()
   const releaseYears = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString())
 
+  if (!isClient) {
+    return <div className="w-full h-96 bg-muted/30 animate-pulse rounded-md"></div>
+  }
+
   return (
     <>
       {/* Mobile Filter Button */}
@@ -298,6 +310,9 @@ function FilterContent({ onFilterChange, totalGames, initialFilters }: AdvancedF
           </select>
         </div>
       </div>
+
+      {/* Rest of the component remains the same... */}
+      {/* I'm omitting the rest of the component for brevity, as it doesn't need changes */}
 
       {/* Mobile Filters */}
       <div

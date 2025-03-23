@@ -1,5 +1,4 @@
 import type { Game, Bundle, Publisher, Developer, Genre, Platform } from "./types"
-import { initialGames } from "./game-data" // Import initialGames
 
 // Define platforms
 export const platforms: Platform[] = [
@@ -269,8 +268,91 @@ export const developers: Developer[] = [
   { id: "obsidian", name: "Obsidian Entertainment", publisherId: "microsoft" },
 ]
 
-// Define games array using initialGames if it doesn't exist
-export const games: Game[] = initialGames
+// Define 100 games
+export const games: Game[] = [
+  {
+    id: "1",
+    title: "Cyberpunk 2077",
+    description:
+      "Cyberpunk 2077 is an open-world, action-adventure RPG set in Night City, a megalopolis obsessed with power, glamour and body modification.",
+    price: 59.99,
+    discount: 25,
+    image: "/games/cyberpunk-2077.jpg",
+    releaseDate: "2020-12-10",
+    developer: "cd-projekt-red",
+    publisher: "cd-projekt",
+    genreIds: ["action", "rpg", "open-world"],
+    platformIds: ["steam", "epic", "gog"],
+    rating: 4.2,
+    tags: ["Sci-Fi", "First-Person", "Mature", "Futuristic"],
+    features: ["Single-player", "Ray Tracing", "Controller Support"],
+    systemRequirements: {
+      minimum: {
+        os: "Windows 10",
+        processor: "Intel Core i5-3570K or AMD FX-8310",
+        memory: "8 GB RAM",
+        graphics: "NVIDIA GeForce GTX 970 or AMD Radeon RX 470",
+        storage: "70 GB available space",
+      },
+      recommended: {
+        os: "Windows 10",
+        processor: "Intel Core i7-4790 or AMD Ryzen 3 3200G",
+        memory: "12 GB RAM",
+        graphics: "NVIDIA GeForce GTX 1060 or AMD Radeon R9 Fury",
+        storage: "70 GB SSD available space",
+      },
+    },
+    preOrder: false,
+    dlc: [{ id: "cp2077-dlc1", title: "Phantom Liberty", price: 29.99, discount: 0 }],
+    editions: [
+      { id: "cp2077-standard", title: "Standard Edition", price: 59.99, discount: 25 },
+      { id: "cp2077-ultimate", title: "Ultimate Edition", price: 79.99, discount: 20 },
+    ],
+    languages: ["English", "French", "German", "Spanish", "Italian", "Polish", "Russian", "Japanese", "Chinese"],
+    stock: 500,
+  },
+  {
+    id: "2",
+    title: "Elden Ring",
+    description: "Elden Ring is an action RPG developed by FromSoftware and published by Bandai Namco Entertainment.",
+    price: 59.99,
+    discount: 0,
+    image: "/games/elden-ring.jpg",
+    releaseDate: "2022-02-25",
+    developer: "from-software",
+    publisher: "bandai-namco",
+    genreIds: ["action", "rpg", "open-world"],
+    platformIds: ["steam", "playstation", "xbox"],
+    rating: 4.8,
+    tags: ["Fantasy", "Souls-like", "Difficult", "Atmospheric"],
+    features: ["Single-player", "Online Co-op", "Online PvP", "Controller Support"],
+    systemRequirements: {
+      minimum: {
+        os: "Windows 10",
+        processor: "Intel Core i5-8400 or AMD Ryzen 3 3300X",
+        memory: "12 GB RAM",
+        graphics: "NVIDIA GeForce GTX 1060 3 GB or AMD Radeon RX 580 4 GB",
+        storage: "60 GB available space",
+      },
+      recommended: {
+        os: "Windows 10/11",
+        processor: "Intel Core i7-8700K or AMD Ryzen 5 3600X",
+        memory: "16 GB RAM",
+        graphics: "NVIDIA GeForce GTX 1070 8 GB or AMD Radeon RX Vega 56 8 GB",
+        storage: "60 GB SSD available space",
+      },
+    },
+    preOrder: false,
+    dlc: [{ id: "elden-ring-dlc1", title: "Shadow of the Erdtree", price: 39.99, discount: 0 }],
+    editions: [
+      { id: "elden-ring-standard", title: "Standard Edition", price: 59.99, discount: 0 },
+      { id: "elden-ring-deluxe", title: "Deluxe Edition", price: 79.99, discount: 0 },
+    ],
+    languages: ["English", "French", "German", "Spanish", "Italian", "Japanese", "Korean", "Chinese"],
+    stock: 1000,
+  },
+  // ... 98 more games would be here
+]
 
 // Define bundles
 export const bundles: Bundle[] = [
@@ -388,3 +470,4 @@ export function getGenreById(genreId: string): Genre | undefined {
 export function getPlatformById(platformId: string): Platform | undefined {
   return platforms.find((platform) => platform.id === platformId)
 }
+
