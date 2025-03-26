@@ -1,249 +1,139 @@
-"use client"
-
-import { useState, useEffect, useRef, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { Suspense } from "react"
 import { Gamepad2 } from "lucide-react"
-
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 import { Button } from "@/components/ui/button"
 import { GameCard } from "@/components/game-card"
 import { GameCardSkeleton } from "@/components/game-card-skeleton"
 import { AdvancedFilter } from "@/components/advanced-filter"
-import { games } from "@/lib/game-database"
 
-interface GamesPageProps {
-  searchParams: {
-    q?: string
-    genre?: string | string[]
-    platform?: string | string[]
-    publisher?: string | string[]
-    min?: string
-    max?: string
-    rating?: string
-    year?: string
-    sale?: string
-    sort?: string
+export const dynamic = "force-dynamic"
+
+async function GamesContent({ searchParams }: { searchParams: any }) {
+  const supabase = createServerComponentClient({ cookies })
+
+  // Start with a base query
+  let query = supabase.from("games").select("*")
+
+  // Apply filters based on search params
+  if (searchParams.q) {
+    query = query.ilike("title", `%${searchParams.q}%`)
   }
+
+  if (searchParams.genre) {
+    const genres = Array.isArray(searchParams.genre) ? searchParams.genre : [searchParams.genre]
+
+    // This assumes genres are stored as a JSON array
+    genres.forEach((genre) => {
+      query = query.contains("genres", [genre])
+    })
+  }
+
+  if (searchParams.platform) {
+    const platforms = Array.isArray(searchParams.platform) ? searchParams.platform : [searchParams.platform]
+
+    platforms.forEach((platform) => {
+      query = query.contains("platforms", [platform])
+    })
+  }
+
+  if (searchParams.min) {
+    query = query.gte("price", Number.parseFloat(searchParams.min))
+  }
+
+  if (searchParams.max) {
+    query = query.lte("price", Number.parseFloat(searchParams.max))
+  }
+
+  if (searchParams.sale === "true") {
+    query = query.gt("discount", 0)
+  }
+
+  // Apply sorting
+  if (searchParams.sort) {
+    switch (searchParams.sort) {
+      case "price-asc":
+        query = query.order("price", { ascending: true })
+        break
+      case "price-desc":
+        query = query.order("price", { ascending: false })
+        break
+      case "name-asc":
+        query = query.order("title", { ascending: true })
+        break
+      case "name-desc":
+        query = query.order("title", { ascending: false })
+        break
+      case "release-desc":
+        query = query.order("release_date", { ascending: false })
+        break
+      default:
+        query = query.order("created_at", { ascending: false })
+    }
+  } else {
+    // Default sorting
+    query = query.order("created_at", { ascending: false })
+  }
+
+  const { data: games, error } = await query
+
+  if (error) {
+    console.error("Error fetching games:", error)
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <Gamepad2 className="mb-4 h-12 w-12 text-muted-foreground" />
+        <h3 className="mb-2 text-xl font-medium">Error loading games</h3>
+        <p className="mb-6 text-sm text-muted-foreground">
+          There was a problem fetching the games. Please try again later.
+        </p>
+      </div>
+    )
+  }
+
+  // Convert Supabase data to match the Game type
+  const formattedGames = games.map((game) => ({
+    id: game.id,
+    title: game.title,
+    description: game.description,
+    price: game.price,
+    discount: game.discount || 0,
+    image: game.cover_image_url,
+    releaseDate: game.release_date,
+    developer: game.developer,
+    publisher: game.publisher,
+    genres: Array.isArray(game.genres) ? game.genres : [],
+    platforms: Array.isArray(game.platforms) ? game.platforms : [],
+  }))
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing <span className="font-medium text-foreground">{formattedGames.length}</span> games
+        </p>
+      </div>
+
+      {formattedGames.length > 0 ? (
+        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {formattedGames.map((game) => (
+            <GameCard key={game.id} game={game} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <Gamepad2 className="mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="mb-2 text-xl font-medium">No games found</h3>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Try adjusting your filters or search term to find what you're looking for.
+          </p>
+          <Button href="/games">Reset Filters</Button>
+        </div>
+      )}
+    </div>
+  )
 }
 
-export default function GamesPage({ searchParams }: GamesPageProps) {
-  const router = useRouter()
-  const [filteredGames, setFilteredGames] = useState([...games])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isInitialized, setIsInitialized] = useState(false)
-
-  const isMounted = useRef(true)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Convert search params to the right format
-  const genres = Array.isArray(searchParams.genre) ? searchParams.genre : searchParams.genre ? [searchParams.genre] : []
-
-  const platforms = Array.isArray(searchParams.platform)
-    ? searchParams.platform
-    : searchParams.platform
-      ? [searchParams.platform]
-      : []
-
-  const publishers = Array.isArray(searchParams.publisher)
-    ? searchParams.publisher
-    : searchParams.publisher
-      ? [searchParams.publisher]
-      : []
-
-  // Clear all timeouts helper function
-  const clearAllTimeouts = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
-
-    if (safetyTimeoutRef.current) {
-      clearTimeout(safetyTimeoutRef.current)
-      safetyTimeoutRef.current = null
-    }
-  }, [])
-
-  // Set up mounted state and cleanup
-  useEffect(() => {
-    isMounted.current = true
-
-    // Set initial state
-    if (!isInitialized) {
-      setIsInitialized(true)
-      filterGames()
-    }
-
-    return () => {
-      isMounted.current = false
-      clearAllTimeouts()
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Filter games based on search params
-  const filterGames = useCallback(() => {
-    // Clear any existing timeout to prevent memory leaks
-    clearAllTimeouts()
-
-    // Set loading state immediately
-    setIsLoading(true)
-
-    // Use setTimeout to prevent blocking the UI
-    timeoutRef.current = setTimeout(() => {
-      try {
-        if (!isMounted.current) return
-
-        let result = [...games]
-
-        if (searchParams.q) {
-          const query = searchParams.q.toLowerCase()
-          result = result.filter(
-            (game) =>
-              game.title.toLowerCase().includes(query) ||
-              game.description.toLowerCase().includes(query) ||
-              (game.tags && game.tags.some((tag) => tag.toLowerCase().includes(query))),
-          )
-        }
-
-        if (genres.length > 0) {
-          result = result.filter((game) =>
-            genres.some(
-              (genre) =>
-                (game.genreIds && game.genreIds.includes(genre)) || (game.genres && game.genres.includes(genre)),
-            ),
-          )
-        }
-
-        if (platforms.length > 0) {
-          result = result.filter((game) =>
-            platforms.some(
-              (platform) =>
-                (game.platformIds && game.platformIds.includes(platform)) ||
-                (game.platforms && game.platforms.includes(platform)),
-            ),
-          )
-        }
-
-        if (publishers.length > 0) {
-          result = result.filter((game) => publishers.includes(game.publisher))
-        }
-
-        if (searchParams.min) {
-          const minPrice = Number.parseFloat(searchParams.min)
-          result = result.filter((game) => {
-            const price = game.discount > 0 ? game.price * (1 - game.discount / 100) : game.price
-            return price >= minPrice
-          })
-        }
-
-        if (searchParams.max) {
-          const maxPrice = Number.parseFloat(searchParams.max)
-          result = result.filter((game) => {
-            const price = game.discount > 0 ? game.price * (1 - game.discount / 100) : game.price
-            return price <= maxPrice
-          })
-        }
-
-        if (searchParams.rating) {
-          const minRating = Number.parseFloat(searchParams.rating)
-          result = result.filter((game) => (game.rating || 0) >= minRating)
-        }
-
-        if (searchParams.year) {
-          const year = searchParams.year
-          result = result.filter((game) => {
-            const releaseYear = new Date(game.releaseDate).getFullYear().toString()
-            return releaseYear === year
-          })
-        }
-
-        if (searchParams.sale === "true") {
-          result = result.filter((game) => game.discount > 0)
-        }
-
-        // Sort games
-        if (searchParams.sort) {
-          switch (searchParams.sort) {
-            case "price-asc":
-              result.sort((a, b) => {
-                const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
-                const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
-                return priceA - priceB
-              })
-              break
-            case "price-desc":
-              result.sort((a, b) => {
-                const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
-                const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
-                return priceB - priceA
-              })
-              break
-            case "name-asc":
-              result.sort((a, b) => a.title.localeCompare(b.title))
-              break
-            case "name-desc":
-              result.sort((a, b) => b.title.localeCompare(a.title))
-              break
-            case "rating-desc":
-              result.sort((a, b) => (b.rating || 0) - (a.rating || 0))
-              break
-            case "release-desc":
-              result.sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
-              break
-            case "discount-desc":
-              result.sort((a, b) => b.discount - a.discount)
-              break
-            default:
-              // Default sorting (relevance) - no specific sort
-              break
-          }
-        }
-
-        if (isMounted.current) {
-          setFilteredGames(result)
-          setIsLoading(false)
-        }
-      } catch (error) {
-        console.error("Error filtering games:", error)
-        if (isMounted.current) {
-          setIsLoading(false)
-        }
-      }
-    }, 300)
-
-    // Add a safety timeout to ensure loading state doesn't get stuck
-    safetyTimeoutRef.current = setTimeout(() => {
-      if (isMounted.current) {
-        setIsLoading(false)
-      }
-    }, 2000) // 2 seconds max loading time
-  }, [searchParams, genres, platforms, publishers, clearAllTimeouts])
-
-  // Run filter when search params change
-  useEffect(() => {
-    filterGames()
-
-    return () => {
-      clearAllTimeouts()
-    }
-  }, [searchParams, filterGames, clearAllTimeouts])
-
-  // Function to handle filter changes (client-side)
-  const handleFilterChange = () => {
-    // This is handled by the component itself through URL updates
-  }
-
-  // Force loading state to false after a delay (safety measure)
-  useEffect(() => {
-    const forceLoadingTimeout = setTimeout(() => {
-      if (isLoading && isMounted.current) {
-        console.log("Force ending loading state after timeout")
-        setIsLoading(false)
-      }
-    }, 3000)
-
-    return () => clearTimeout(forceLoadingTimeout)
-  }, [isLoading])
-
+export default function GamesPage({ searchParams }: { searchParams: any }) {
   return (
     <div className="container px-4 py-8">
       <div className="mb-8">
@@ -254,13 +144,19 @@ export default function GamesPage({ searchParams }: GamesPageProps) {
       <div className="grid gap-8 md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
         {/* Filters Sidebar */}
         <AdvancedFilter
-          onFilterChange={handleFilterChange}
-          totalGames={filteredGames.length}
+          totalGames={0} // This will be updated by the client component
           initialFilters={{
             search: searchParams.q || "",
-            genres: genres,
-            platforms: platforms,
-            publishers: publishers,
+            genres: Array.isArray(searchParams.genre)
+              ? searchParams.genre
+              : searchParams.genre
+                ? [searchParams.genre]
+                : [],
+            platforms: Array.isArray(searchParams.platform)
+              ? searchParams.platform
+              : searchParams.platform
+                ? [searchParams.platform]
+                : [],
             priceRange: [Number(searchParams.min || 0), Number(searchParams.max || 100)],
             rating: searchParams.rating ? Number(searchParams.rating) : null,
             releaseYear: searchParams.year || null,
@@ -270,14 +166,8 @@ export default function GamesPage({ searchParams }: GamesPageProps) {
         />
 
         {/* Games Grid */}
-        <div className="space-y-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing <span className="font-medium text-foreground">{filteredGames.length}</span> games
-            </p>
-          </div>
-
-          {isLoading ? (
+        <Suspense
+          fallback={
             <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array(12)
                 .fill(0)
@@ -285,23 +175,10 @@ export default function GamesPage({ searchParams }: GamesPageProps) {
                   <GameCardSkeleton key={i} />
                 ))}
             </div>
-          ) : filteredGames.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredGames.map((game) => (
-                <GameCard key={game.id} game={game} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-              <Gamepad2 className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-xl font-medium">No games found</h3>
-              <p className="mb-6 text-sm text-muted-foreground">
-                Try adjusting your filters or search term to find what you're looking for.
-              </p>
-              <Button onClick={() => router.push("/games")}>Reset Filters</Button>
-            </div>
-          )}
-        </div>
+          }
+        >
+          <GamesContent searchParams={searchParams} />
+        </Suspense>
       </div>
     </div>
   )

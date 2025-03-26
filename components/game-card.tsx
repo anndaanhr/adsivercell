@@ -13,22 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { Game } from "@/lib/types"
 
 interface GameCardProps {
-  game:
-    | Game
-    | {
-        id: string
-        title: string
-        description: string
-        price: number
-        discount: number
-        image?: string
-        platforms: string[]
-        genres: string[]
-        developer: string
-        publisher: string
-        releaseDate: string
-        tags?: string[]
-      }
+  game: Game
 }
 
 export function GameCard({ game }: GameCardProps) {
