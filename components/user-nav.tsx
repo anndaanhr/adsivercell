@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { User, LogIn, LogOut, ShoppingCart, Heart, Settings, Mail, Shield } from "lucide-react"
+import { User, LogIn, LogOut, ShoppingCart, Heart, Settings, Mail, Shield, Store } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,11 +18,37 @@ import { useAuth } from "@/components/auth-provider"
 import { useVerification } from "@/components/verification-provider"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { UserRoleBadge } from "@/components/user-role-badge"
+import { useState, useEffect } from "react"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export function UserNav() {
   const { user, logout } = useAuth()
   const { isVerified, sendVerificationEmail } = useVerification()
   const { toast } = useToast()
+  const supabase = createClientComponentClient()
+  const [userRole, setUserRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (user) {
+      // Get user role from user_roles table
+      const fetchUserRole = async () => {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (!error && data) {
+          setUserRole(data.role)
+        }
+      }
+
+      fetchUserRole()
+    } else {
+      setUserRole(null)
+    }
+  }, [user, supabase])
 
   const handleLogout = () => {
     logout()
@@ -63,7 +89,10 @@ export function UserNav() {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{user.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                {!isVerified && <Badge className="mt-1 w-fit bg-amber-500 hover:bg-amber-600">Unverified</Badge>}
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {!isVerified && <Badge className="w-fit bg-amber-500 hover:bg-amber-600">Unverified</Badge>}
+                  <UserRoleBadge />
+                </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -108,6 +137,32 @@ export function UserNav() {
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
+
+            {userRole && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {(userRole === 'admin' || userRole === 'seller') && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/seller">
+                        <Store className="mr-2 h-4 w-4" />
+                        <span>Seller Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  {userRole === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <Shield className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuGroup>
+              </>
+            )}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
               <LogOut className="mr-2 h-4 w-4" />
@@ -136,4 +191,3 @@ export function UserNav() {
     </DropdownMenu>
   )
 }
-

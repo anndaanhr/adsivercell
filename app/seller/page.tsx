@@ -1,202 +1,202 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
-import { Package, DollarSign, BarChart, FileText, Plus } from "lucide-react"
 import Link from "next/link"
+import { DollarSign, Package, ShoppingCart, TrendingUp, ArrowRight } from "lucide-react"
 
-export default function SellerDashboardPage() {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
-  const { toast } = useToast()
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { requireSeller } from "@/lib/auth-roles"
 
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({
-    totalGames: 0,
-    totalSales: 0,
-    pendingWithdrawals: 0,
-    revenue: 0,
-  })
-
-  useEffect(() => {
-    checkSellerAndFetchStats()
-  }, [])
-
-  async function checkSellerAndFetchStats() {
-    try {
-      setLoading(true)
-
-      // Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push("/auth/login")
-        return
-      }
-
-      // Check if user has seller role
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-      if (!profile || profile.role !== "seller") {
-        router.push("/unauthorized")
-        return
-      }
-
-      // Fetch seller stats
-      // For now, we'll just use placeholder data
-      // In a real implementation, you would fetch this from your database
-      setStats({
-        totalGames: 12,
-        totalSales: 156,
-        pendingWithdrawals: 2,
-        revenue: 3240.5,
-      })
-    } catch (error) {
-      console.error("Error fetching seller stats:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load seller dashboard. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="container max-w-7xl mx-auto py-12 flex justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    )
-  }
+export default async function SellerDashboardPage() {
+  // Check if the user has seller access
+  await requireSeller()
 
   return (
-    <div className="container max-w-7xl mx-auto py-12">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Seller Dashboard</h1>
-          <p className="text-muted-foreground">Manage your games, track sales, and handle withdrawals</p>
+    <div className="flex flex-col space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Seller Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/seller/games/new">
+              Add New Game
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
-        <Button asChild>
-          <Link href="/seller/games/new" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Add New Game
-          </Link>
-        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Games</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold">{stats.totalGames}</div>
-              <Package className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="products">My Products</TabsTrigger>
+          <TabsTrigger value="stats">Analytics</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Sales</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold">{stats.totalSales}</div>
-              <BarChart className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">$12,546.89</div>
+                <p className="text-xs text-muted-foreground">+15.2% from last month</p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold">${stats.revenue.toFixed(2)}</div>
-              <DollarSign className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Product Sales</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">+573</div>
+                <p className="text-xs text-muted-foreground">+12% from last month</p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Withdrawals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold">{stats.pendingWithdrawals}</div>
-              <FileText className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">24</div>
+                <p className="text-xs text-muted-foreground">+2 since last week</p>
+              </CardContent>
+            </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Sales</CardTitle>
-            <CardDescription>Your most recent game sales</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center py-8 text-muted-foreground">No recent sales to display</p>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">4.3%</div>
+                <p className="text-xs text-muted-foreground">+0.5% from last month</p>
+              </CardContent>
+            </Card>
+          </div>
 
-        <Card className="lg:row-span-2">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common seller tasks</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button asChild className="w-full justify-start" variant="outline">
-              <Link href="/seller/games">
-                <Package className="mr-2 h-4 w-4" />
-                Manage Games
-              </Link>
-            </Button>
-            <Button asChild className="w-full justify-start" variant="outline">
-              <Link href="/seller/sales">
-                <BarChart className="mr-2 h-4 w-4" />
-                View Sales History
-              </Link>
-            </Button>
-            <Button asChild className="w-full justify-start" variant="outline">
-              <Link href="/seller/withdrawals">
-                <DollarSign className="mr-2 h-4 w-4" />
-                Request Withdrawal
-              </Link>
-            </Button>
-            <Button asChild className="w-full justify-start" variant="outline">
-              <Link href="/seller/reports">
-                <FileText className="mr-2 h-4 w-4" />
-                Generate Reports
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-8">
+            <Card className="col-span-5">
+              <CardHeader>
+                <CardTitle>Sales Overview</CardTitle>
+                <CardDescription>View your sales performance over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[250px] w-full rounded-md bg-muted/50 flex items-center justify-center">
+                  <TrendingUp className="h-8 w-8 text-muted-foreground" />
+                  <span className="ml-2 text-sm text-muted-foreground">Sales chart will be displayed here</span>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Performing Games</CardTitle>
-            <CardDescription>Your best selling games</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center py-8 text-muted-foreground">No data to display</p>
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="col-span-3">
+              <CardHeader>
+                <CardTitle>Top Selling Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[
+                    { id: 1, name: "Cyberpunk 2077", sales: 148, revenue: 6656 },
+                    { id: 2, name: "Elden Ring", sales: 89, revenue: 5340 },
+                    { id: 3, name: "Steam Wallet Card", sales: 34, revenue: 1020 },
+                  ].map((product) => (
+                    <div key={product.id} className="flex items-center justify-between space-y-0 rounded-md border p-3">
+                      <div>
+                        <p className="text-sm font-medium leading-none">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.sales} units sold</p>
+                      </div>
+                      <div className="text-sm font-medium">${product.revenue}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between">
+                <div>
+                  <CardTitle>My Products</CardTitle>
+                  <CardDescription>
+                    Manage your games and digital products
+                  </CardDescription>
+                </div>
+                <Button asChild size="sm">
+                  <Link href="/seller/games">
+                    View All Products
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="rounded-md border p-4">
+                  <h3 className="mb-2 text-sm font-medium">Games</h3>
+                  <p className="text-sm text-muted-foreground">
+                    List and manage game keys for various platforms.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/seller/games">
+                        Manage Games
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm">
+                      <Link href="/seller/games/new">
+                        Add New Game
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-md border p-4">
+                  <h3 className="mb-2 text-sm font-medium">Digital Products</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage digital products like gift cards, wallet top-ups, and more.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/seller/digital-products">
+                        Manage Products
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm">
+                      <Link href="/seller/digital-products/new">
+                        Add New Product
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="stats" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sales Analytics</CardTitle>
+              <CardDescription>
+                Detailed statistics and insights about your sales performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full rounded-md bg-muted/50 flex items-center justify-center">
+                <TrendingUp className="h-8 w-8 text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Advanced analytics will be displayed here
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
-

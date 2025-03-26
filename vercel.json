@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "regions": ["all"],
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://rvdpjmnrecooxfohislz.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2ZHBqbW5yZWNvb3hmb2hpc2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI2NjExNjgsImV4cCI6MjA1ODIzNzE2OH0.Q4VtBPtSv0heZjCO784TUc2cj_DmI-fVY5kLj5RPieo"
+  }
+}
